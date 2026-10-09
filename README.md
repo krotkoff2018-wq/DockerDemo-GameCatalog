@@ -169,33 +169,6 @@ python -m pytest -q tests
 
 Эти тесты проверяют ответы сервиса и фильтрацию без подключения к PostgreSQL. Сквозная проверка взаимодействия всех четырёх контейнеров проводится в Docker Desktop.
 
-## Публикация в публичный GitHub-репозиторий
-
-Не загружайте файл `.env` (он включён в `.gitignore`). Загрузите **всё содержимое папки `DockerDemo`**, в том числе скрытые файлы `.env.example` и `.gitignore`.
-
-Вариант через [GitHub](https://github.com/new): создайте репозиторий `DockerDemo-GameCatalog`, выберите **Public**, затем в PowerShell из корня проекта выполните:
-
-```powershell
-git init
-git add .
-git commit -m "Лабораторная №37: каталог видеоигр на Docker Compose"
-git branch -M main
-git remote add origin https://github.com/ВАШ_ЛОГИН/DockerDemo-GameCatalog.git
-git push -u origin main
-```
-
-Если установлен GitHub CLI и пользователь вошёл в `gh auth login`, вместо ручного создания и `git remote add`/`git push` можно выполнить:
-
-```powershell
-git init
-git add .
-git commit -m "Лабораторная №37: каталог видеоигр на Docker Compose"
-git branch -M main
-gh repo create DockerDemo-GameCatalog --public --source=. --remote=origin --push
-```
-
-Итоговый адрес: `https://github.com/ВАШ_ЛОГИН/DockerDemo-GameCatalog`. Внесите **свой настоящий URL** в таблицу группы, указанную в лабораторном задании.
-
 ## Проверка по критериям лабораторной
 
 - ✅ Четыре контейнера в одном `docker-compose.yml`.
@@ -203,7 +176,7 @@ gh repo create DockerDemo-GameCatalog --public --source=. --remote=origin --push
 - ✅ Backend REST API, обращения к БД и к независимому web-service.
 - ✅ PostgreSQL с автоматической первоначальной загрузкой данных (`db/init.sql`), сохранение в volume.
 - ✅ `depends_on`, `healthcheck`, переменные окружения, сеть bridge.
-- ✅ `.gitignore`, `.env.example`, инструкции запуска и публикации.
+- ✅ `.gitignore`, `.env.example`, инструкции запуска.
 
 **Проверки CI:** после публикации на GitHub workflow `.github/workflows/ci.yml` запускает тесты web-service и проверку синтаксиса `docker compose config`.
 
