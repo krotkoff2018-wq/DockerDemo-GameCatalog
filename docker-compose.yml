@@ -1,0 +1,81 @@
+name: game-catalog
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-games_db}
+      POSTGRES_USER: ${POSTGRES_USER:-games_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Создайте файл .env на основе .env.example}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks:
+      - catalog_net
+
+  web-service:
+    build: ./web-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks:
+      - catalog_net
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-games_db}
+      DB_USER: ${POSTGRES_USER:-games_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Создайте файл .env на основе .env.example}
+      WEB_SERVICE_URL: http://web-service:8001
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      web-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks:
+      - catalog_net
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      API_URL: http://backend:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+    networks:
+      - catalog_net
+
+volumes:
+  postgres_data:
+
+networks:
+  catalog_net:
+    driver: bridge
